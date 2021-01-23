@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE vuxml PUBLIC "-//vuxml.org//DTD VuXML 1.1//EN" "http://www.vuxml.org/dtd/vuxml-1/vuxml-11.dtd" [
+]>
+<vuxml xmlns="http://www.vuxml.org/apps/vuxml-1">
+  <vuln vid="01ffd06a-36ed-11eb-b655-3065ec8fd3ec">
+    <topic>chromium -- multiple vulnerabilities</topic>
+    <affects>
+      <package>
+	<name>chromium</name>
+	<range><lt>87.0.4280.88</lt></range>
+      </package>
+    </affects>
+    <description>
+      <body xmlns="http://www.w3.org/1999/xhtml">
+	<p>Chrome Releases reports:</p>
+	<blockquote cite="https://chromereleases.googleblog.com/2020/12/stable-channel-update-for-desktop.html">
+	  <p>This release contains 8 security fixes, including:</p>
+	  <ul>
+	    <li>[1142331] High CVE-2020-16037: Use after free in clipboard.
+	      Reported by Ryoya Tsukasaki on 2020-10-26</li>
+	    <li>[1138683] High CVE-2020-16038: Use after free in media.
+	      Reported by Khalil Zhani on 2020-10-14</li>
+	    <li>[1149177] High CVE-2020-16039: Use after free in extensions.
+	      Reported by Anonymous on 2020-11-15</li>
+	    <li>[1150649] High CVE-2020-16040: Insufficient data validation in
+	      V8. Reported by Lucas Pinheiro, Microsoft Browser Vulnerability
+	      Research on 2020-11-19</li>
+	    <li>[1151865] Medium CVE-2020-16041: Out of bounds read in
+	      networking. Reported by Sergei Glazunov and Mark Brand of Google
+	      Project Zero on 2020-11-23</li>
+	    <li>[1151890] Medium CVE-2020-16042: Uninitialized Use in V8.
+	      Reported by André Bargull on 2020-11-2</li>
+	  </ul>
+	</blockquote>
+      </body>
+    </description>
+    <references>
+      <cvename>CVE-2020-16037</cvename>
+      <cvename>CVE-2020-16038</cvename>
+      <cvename>CVE-2020-16039</cvename>
+      <cvename>CVE-2020-16040</cvename>
+      <cvename>CVE-2020-16041</cvename>
+      <cvename>CVE-2020-16042</cvename>
+      <url>https://chromereleases.googleblog.com/2020/12/stable-channel-update-for-desktop.html</url>
+    </references>
+    <dates>
+      <discovery>2020-12-02</discovery>
+      <entry>2020-12-05</entry>
+    </dates>
+  </vuln>
+
+</vuxml><!-- EOF -->
+<!-- Note:  Please add new entries to the beginning of this file. -->
+<!-- ex: set ts=8 tw=80 sw=2: -->
+<!-- vim: set softtabstop=2 noexpandtab: -->

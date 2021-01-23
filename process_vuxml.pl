@@ -17,14 +17,19 @@
 #use 5.10.1;
 use strict;
 use warnings;
+use XML::DOM::XPath;
+use Encode;
 use Digest::SHA qw(sha256_hex);
 use autodie qw(:default);
 use IO::File;
+use Getopt::Long;
 
 use FreshPorts::database;
 use FreshPorts::vuxml;
 use FreshPorts::vuxml_parsing;
 use FreshPorts::vuxml_mark_commits;
+
+my $filename;
 
 # From https://perldoc.perl.org/perlunifaq.html#What-is-a-%22wide-character%22%3f
 # to handle: Wide character in print at /usr/local/lib/perl5/site_perl/FreshPorts/vuxml_parsing.pm line 234, <> chunk 1.\n
@@ -33,29 +38,24 @@ binmode STDOUT, ":encoding(UTF-8)";
 
 #use feature qw(switch);
 
-$0 =~ s@.*/@@;
 
-# Reads vuln.xml on stdin
+# Reads vuln.xml on stdin * NOT ANY MORE
+GetOptions ('filename:s' => \$filename);
+
+print $filename;
 
 my $start = time;
+
+print 'process_vuxml.pl finishes' . "\n";
+
 
 MAIN:
 {
     my %vulns;
     my @vulns;
 
-    # slurp vuln.xml whole.
-    local $/;
-
-    @vulns = split /\n+(?=\s+<vuln vid="([^"]+)")/, <>;
-
-    # Discard the boilerplate at the top of the file.
-    shift(@vulns);
-
-    # Discard the boilerplate at the end of the file.
-    $vulns[-1] =~ s@\n</vuxml>.*\Z@@s;
-
-    %vulns = @vulns;
+    my $parser = new XML::DOM::Parser;
+    my $doc = $parser->parsefile ($filename);
     
     my $dbh;
     $dbh = FreshPorts::Database::GetDBHandle();
@@ -64,17 +64,14 @@ MAIN:
         my $vuxml = FreshPorts::vuxml->new( $dbh );
           
         eval {
-            for my $v ( sort keys %vulns ) {
-
-                # Make sure xml snippet is terminated with a newline
-                $vulns{$v} =~ s/\n*\Z/\n/s;
-
-#       	print $vulns{$v};
-
-                my $csum = sha256_hex( $vulns{$v} );
+            for my $node ($doc->findnodes('/vuxml/vuln'))
+            {
+                my $vid  = $node->getAttributeNode('vid')->getValue();
+                my $csum = sha256_hex(Encode::encode_utf8($node->toString));
+                print  $vid . " " . $csum . "\n";
 
                 # fetch the checksum from the database
-                my $checksum = $vuxml->FetchChecksumByVID($v);
+                my $checksum = $vuxml->FetchChecksumByVID($vid);
 
                 my $updateRequired = 1;
                 if (defined($checksum)) {
@@ -83,16 +80,16 @@ MAIN:
                         $updateRequired = 0;
                     }
 
-                    print "vuln check: $v = '$csum' '$checksum'\n";
+                    print "vuln check: $vid = '$csum' '$checksum'\n";
                 } else {
-                    print "vuln check: $v = '$csum' not found\n";
+                    print "vuln check: $vid = '$csum' not found\n";
                 }
 
                 if ($updateRequired) {
-                    if ($fh->open(\$vulns{$v}, '<')) {
+                    if ($fh->open(\$node->toString(), '<')) {
                         my $p = FreshPorts::vuxml_parsing->new(Stream        => $fh,
-                                                            DBHandle      => $dbh,
-                                                            UpdateInPlace => 1);
+                                                               DBHandle      => $dbh,
+                                                               UpdateInPlace => 1);
 
                         $p->parse_xml($csum);
 
@@ -108,16 +105,17 @@ MAIN:
 
                     # process $vulns{$v} via vuxml_processing
 
-                    print 'invoking vuxml_mark_commits with ' . $v . "\n";
+                    print 'invoking vuxml_mark_commits with ' . $vid . "\n";
                     my $CommitMarker = FreshPorts::vuxml_mark_commits->new(DBHandle => $dbh,
-                                                                           vid      => $v);
+                                                                           vid      => $vid);
                     print 'invoking ProcessEachRangeRecord'. "\n";
                     my $i = $CommitMarker->ProcessEachRangeRecord();
 
                     print 'invoking ClearCachedEntries' . "\n";
-                    $CommitMarker->ClearCachedEntries($v);
+                    $CommitMarker->ClearCachedEntries($vid);
+                    
                 } # if ($updateRequired)
-            } # for my $v
+            } # for my $node
         }; # eval
 
         print 'finished with eval()' . "\n";
